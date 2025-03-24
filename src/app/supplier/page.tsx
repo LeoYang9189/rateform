@@ -11,11 +11,16 @@ import {
   Typography,
   Input,
   Modal,
+  Radio,
+  Message,
+  DatePicker,
 } from "@arco-design/web-react";
-import { IconPlus } from "@arco-design/web-react/icon";
+import { IconPlus, IconSave } from "@arco-design/web-react/icon";
+import dayjs from 'dayjs';
 
 const FormItem = Form.Item;
 const { Title } = Typography;
+const RadioGroup = Radio.Group;
 
 const formStyles = {
   label: {
@@ -53,6 +58,8 @@ export default function SupplierPage() {
   const [isCustomer, setIsCustomer] = useState(true);
   const [isSupplier, setIsSupplier] = useState(true);
   const [needAssessment, setNeedAssessment] = useState(true);
+  const [noAssessmentReason, setNoAssessmentReason] = useState("");
+  const [assessmentDeadline, setAssessmentDeadline] = useState<string | undefined>(undefined);
   const [evaluators, setEvaluators] = useState<Evaluator[]>([
     {
       id: 1,
@@ -113,6 +120,14 @@ export default function SupplierPage() {
     setIsModalVisible(false);
   };
 
+  const handleSaveNoAssessment = () => {
+    if (!noAssessmentReason.trim()) {
+      Message.error('请输入不参与评估的原因');
+      return;
+    }
+    Message.success('保存成功');
+  };
+
   return (
     <div>
       <Title heading={2} style={{ color: "rgb(var(--red-6))", marginBottom: 32, fontSize: '24px' }}>
@@ -135,24 +150,54 @@ export default function SupplierPage() {
         {isSupplier && (
           <>
             <div className="mb-6">
-              <div style={formStyles.label}>是否提醒年度评估</div>
-              <Checkbox checked={needAssessment} onChange={setNeedAssessment} style={{ fontSize: '16px' }}>
-                是
-              </Checkbox>
+              <div style={formStyles.label}>是否参与年度评估</div>
+              <RadioGroup 
+                value={needAssessment} 
+                onChange={(value) => setNeedAssessment(value)}
+                style={{ fontSize: '16px' }}
+              >
+                <Radio value={true}>是</Radio>
+                <Radio value={false}>否</Radio>
+              </RadioGroup>
             </div>
+
+            {!needAssessment && (
+              <div className="mb-6">
+                <FormItem 
+                  label="不评估原因" 
+                  style={{ marginBottom: 16 }}
+                >
+                  <Input.TextArea 
+                    placeholder="请输入不参与年度评估的原因" 
+                    value={noAssessmentReason}
+                    onChange={setNoAssessmentReason}
+                    style={{ fontSize: '16px', marginBottom: '16px' }}
+                  />
+                  <Button
+                    type="primary"
+                    icon={<IconSave />}
+                    onClick={handleSaveNoAssessment}
+                    style={{ fontSize: '16px', padding: '8px 24px' }}
+                  >
+                    保存
+                  </Button>
+                </FormItem>
+              </div>
+            )}
 
             {needAssessment && (
               <>
                 <div className="mb-6">
                   <div style={formStyles.label}>评估截止时间</div>
-                  <Select 
-                    defaultValue="oneYear" 
+                  <DatePicker
                     style={{ width: 240 }}
                     size="large"
-                  >
-                    <Select.Option value="oneYear">创建后1年</Select.Option>
-                    <Select.Option value="endOfYear">自然年阳历年底</Select.Option>
-                  </Select>
+                    value={assessmentDeadline}
+                    onChange={setAssessmentDeadline}
+                    placeholder="请选择评估截止时间"
+                    format="YYYY-MM-DD"
+                    disabledDate={(current) => current.isBefore(dayjs(), 'day')}
+                  />
                 </div>
 
                 <div className="mb-6">
