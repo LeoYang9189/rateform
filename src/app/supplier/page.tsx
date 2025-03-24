@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Form,
   Checkbox,
@@ -60,6 +60,8 @@ export default function SupplierPage() {
   const [needAssessment, setNeedAssessment] = useState(true);
   const [noAssessmentReason, setNoAssessmentReason] = useState("");
   const [assessmentDeadline, setAssessmentDeadline] = useState<string | undefined>(undefined);
+  const [reminderStartDate, setReminderStartDate] = useState<string | undefined>(undefined);
+  const [reminderEndDate, setReminderEndDate] = useState<string | undefined>(undefined);
   const [evaluators, setEvaluators] = useState<Evaluator[]>([
     {
       id: 1,
@@ -70,6 +72,15 @@ export default function SupplierPage() {
     },
   ]);
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  // 当评估截止时间改变时，自动设置提醒时间
+  useEffect(() => {
+    if (assessmentDeadline) {
+      const deadlineDate = dayjs(assessmentDeadline);
+      setReminderEndDate(assessmentDeadline);
+      setReminderStartDate(deadlineDate.subtract(30, 'day').format('YYYY-MM-DD'));
+    }
+  }, [assessmentDeadline]);
 
   const handleNotifyMethodChange = (evaluatorId: number, method: 'popup' | 'email', checked: boolean) => {
     setEvaluators(evaluators.map(e => {
@@ -203,15 +214,31 @@ export default function SupplierPage() {
                 <div className="mb-6">
                   <div style={formStyles.label}>提醒时间</div>
                   <Space style={formStyles.content}>
-                    <span>截止时间前</span>
-                    <InputNumber
-                      style={{ width: 120 }}
-                      defaultValue={30}
-                      min={1}
-                      precision={0}
+                    <DatePicker
+                      style={{ width: 240 }}
                       size="large"
+                      value={reminderStartDate}
+                      onChange={setReminderStartDate}
+                      placeholder="请选择开始提醒时间"
+                      format="YYYY-MM-DD"
+                      disabledDate={(current) => {
+                        if (!assessmentDeadline) return false;
+                        return current.isAfter(dayjs(assessmentDeadline));
+                      }}
                     />
-                    <span>天</span>
+                    <span>至</span>
+                    <DatePicker
+                      style={{ width: 240 }}
+                      size="large"
+                      value={reminderEndDate}
+                      onChange={setReminderEndDate}
+                      placeholder="请选择结束提醒时间"
+                      format="YYYY-MM-DD"
+                      disabledDate={(current) => {
+                        if (!assessmentDeadline) return false;
+                        return current.isAfter(dayjs(assessmentDeadline));
+                      }}
+                    />
                   </Space>
                 </div>
 
